@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="MoviesDb.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\MoviesDb.Domain\MoviesDb.Domain.csproj" />
   </ItemGroup>
 
