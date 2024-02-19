@@ -1,6 +1,6 @@
 ﻿namespace MoviesDb.Application.Common.Dtos;
 
-public abstract record PagedResponse<TResponse> 
+public record PagedResponse<TResponse> 
 {
     public required int PageSize { get; init; }
     public required int Page { get; init; }

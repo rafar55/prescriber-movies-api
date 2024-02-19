@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using MoviesDb.Application.Common.Dtos;
 using MoviesDb.Application.Common.Interfaces;
 using MoviesDb.Application.Movies.Dtos;
 using MoviesDb.Domain.Models;
@@ -64,19 +65,37 @@ public class MovieRepository : IMovieRepository
         return movie;
     }
 
-    public async Task<IEnumerable<Movie>> GetMoviesAsync(GetMoviesListRequest request)
+    public async Task<PagedResponse<Movie>> GetMoviesAsync(GetMoviesListRequest request)
     {
+
+        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+        
+        var countSql = "SELECT COUNTMmovies.Id) FROM Movies WHERE Title LIKE '%' + IsNull(@title,'') + '%'";
+        using var countCommand = new SqlCommand(countSql, (SqlConnection)connection);
+        countCommand.Parameters.AddWithValue("@title", request.Q);
+        var totalRecords = (await countCommand.ExecuteScalarAsync() as int?) ?? 0;
+      
+        if(totalRecords == 0)
+        {
+            return new PagedResponse<Movie>()
+            {
+                Items = Enumerable.Empty<Movie>(),
+                Total = 0,
+                Page = request.Page,
+                PageSize = request.PageSize
+            };
+        }
+
+
         var sql = """
             SELECT M.Id, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(R.Name, ',') AS Genres
             FROM Movies AS M
             JOIN Genres AS R ON M.Id = R.MovieId
             GROUP BY M.Id, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy
             WHERE M.Title LIKE "%" + IsNull(@title,'') + "%"
-            LIMIT @PageSize OFFSET @Offset
-            ORDER BY M.YearOfRelease DESC
+            OFFSET  @Offset ROWS 
+            FETCH NEXT @PageSize ROW ONLY OPTION (RECOMPILE)
             """;
-
-        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         using var command = new SqlCommand(sql, (SqlConnection)connection);
         command.Parameters.AddWithValue("@title", request.Q);
         command.Parameters.AddWithValue("@PageSize", request.PageSize);
@@ -89,7 +108,13 @@ public class MovieRepository : IMovieRepository
             movies.Add(GetMovieFromReader(reader));
         }
 
-        return movies;
+        return new PagedResponse<Movie>()
+        {
+            Items = movies,
+            Total = totalRecords,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 
     public async Task<int> AddMovieAsync(Movie newMovie)
@@ -123,13 +148,8 @@ public class MovieRepository : IMovieRepository
     {
         using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         using var transaction = (SqlTransaction)connection.BeginTransaction();
-
-        var deleteGenresSql = "DELETE FROM Genres WHERE MovieId = @MovieId";
-        using var deleteGenresCommand = new SqlCommand(deleteGenresSql, (SqlConnection)connection, transaction);
-        deleteGenresCommand.Parameters.AddWithValue("@MovieId", movie.Id);
-        await deleteGenresCommand.ExecuteNonQueryAsync();
-
-
+        
+        await RemoveMovieGenres(movie.Id, connection, transaction);
         await AddGenresAsync(movie, connection, transaction);
 
         var updateSql = """
@@ -142,11 +162,34 @@ public class MovieRepository : IMovieRepository
         updateMovieCommand.Parameters.AddWithValue("@Title", movie.Title);
         updateMovieCommand.Parameters.AddWithValue("@Slug", movie.Slug);
         updateMovieCommand.Parameters.AddWithValue("@YearOfRelease", movie.YearOfRelease);
-        var result = await updateMovieCommand.ExecuteNonQueryAsync();        
+        var result = await updateMovieCommand.ExecuteNonQueryAsync();
 
         transaction.Commit();
 
         return result;
+    }   
+
+    public async Task<int> DeleteMovieAsync(Guid movieId)
+    {
+        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+        using var transaction = (SqlTransaction)connection.BeginTransaction();
+        await RemoveMovieGenres(movieId, connection, transaction);
+
+        var deleteSql = "DELETE FROM Movies WHERE Id = @Id";
+        using var deleteCommand = new SqlCommand(deleteSql, (SqlConnection)connection, transaction);
+        deleteCommand.Parameters.AddWithValue("@Id", movieId);
+        var result = await deleteCommand.ExecuteNonQueryAsync();
+
+        return result;
+    }
+
+
+    private static async Task RemoveMovieGenres(Guid movieId, IDbConnection connection, SqlTransaction transaction)
+    {
+        var deleteGenresSql = "DELETE FROM Genres WHERE MovieId = @MovieId";
+        var deleteGenresCommand = new SqlCommand(deleteGenresSql, (SqlConnection)connection, transaction);
+        deleteGenresCommand.Parameters.AddWithValue("@MovieId", movieId);
+        await deleteGenresCommand.ExecuteNonQueryAsync();       
     }
 
     private static async Task AddGenresAsync(Movie newMovie, IDbConnection connection, SqlTransaction transaction)

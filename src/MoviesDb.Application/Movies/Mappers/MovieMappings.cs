@@ -15,16 +15,14 @@ public static class MovieMappings
         return movies.Select(ToResponse);
     }
 
-    public static Movie MapToMovie(this CreateMovieRequest movie, Guid userId)
+    public static Movie MapToMovie(this CreateMovieRequest movie)
     {
         return new Movie
         {
             Id = Guid.NewGuid(),
             Title = movie.Title,
             YearOfRelease = movie.YearOfRelease,
-            Genres = movie.Genres.ToList(),
-            CreatedAt = DateTimeOffset.UtcNow,
-            CreatedBy = userId
+            Genres = movie.Genres.ToList(),           
         };
     }
 
