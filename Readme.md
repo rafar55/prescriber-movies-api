@@ -29,6 +29,18 @@ I think is better to push on with delivering a working software and then go back
 3. Run the command `docker-compose up --build`. This command will build the Docker images and start the containers.
 4. The application will be available at `http://localhost:8080`.
 
+# Note on Database Initialization with Docker
+
+When running the application with Docker Compose, sometimes the API service might start before the database service is fully initialized. This can cause errors when the API tries to connect to the database. If you encounter this issue, you can try the following steps:
+
+1. Stop all Docker services by running the command `docker-compose down` in your terminal.
+2. Wait for a few seconds to ensure that the database container has fully stopped.
+3. Start all Docker services again by running the command `docker-compose up --build` in your terminal.
+
+The `--build` option ensures that Docker Compose rebuilds the images, which can help if the database initialization issue is due to an outdated image.
+
+Remember that the database initialization can take a while, especially the first time you run the application. So, if you encounter any issues, it's a good idea to wait for a bit and then try again.
+
 # Running the Application with LocalDB on Windows
 
 1. Install .NET 5.0 SDK on your machine.
