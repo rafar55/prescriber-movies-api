@@ -44,10 +44,10 @@ public class MovieRepository : IMovieRepository
 
     public async Task<bool> ExistsSlugAsync(string slug)
     {
-        var sql = "SELECT 1 FROM Movies WHERE Id = @slug";
+        var sql = "SELECT 1 FROM Movies WHERE Slug = @slug";
         using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         using var command = new SqlCommand(sql, (SqlConnection)connection);
-        command.Parameters.AddWithValue("@movieId", slug);
+        command.Parameters.AddWithValue("@slug", slug);
 
         return await command.ExecuteScalarAsync() is not null;
     }
@@ -191,6 +191,8 @@ public class MovieRepository : IMovieRepository
         using var deleteCommand = new SqlCommand(deleteSql, (SqlConnection)connection, transaction);
         deleteCommand.Parameters.AddWithValue("@Id", movieId);
         var result = await deleteCommand.ExecuteNonQueryAsync();
+
+        transaction.Commit();
 
         return result;
     }

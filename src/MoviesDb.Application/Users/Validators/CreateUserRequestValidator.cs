@@ -22,7 +22,7 @@ public class CreateUserRequestValidator: AbstractValidator<CreateUserRequest>
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(150);
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Password).MaximumLength(50).NotEmpty();
-        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password);
+        RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Password's do not match");
     }
 
     private async Task<bool> ValidateEmail(string email, CancellationToken token)

@@ -36,7 +36,7 @@ public class MovieValidator : AbstractValidator<Movie>
     private async Task<bool> ValidateSlug(string slug, CancellationToken token)
     {
         var result = await _movieRepository.ExistsSlugAsync(slug);
-        return result;
+        return !result;
 
     }
 }

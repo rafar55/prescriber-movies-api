@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MoviesDb.Application.Common.Dtos;
 using MoviesDb.Application.Movies.Dtos;
 using MoviesDb.Application.Movies.Services;
+using System.Security.Claims;
 
 namespace MoviesDb.Web.Api.Controllers
 {
@@ -19,7 +21,7 @@ namespace MoviesDb.Web.Api.Controllers
 
         [HttpGet("{movieIdOrSlug}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MovieResponse>> GetMovieByIdOrSlugAsync(string movieIdOrSlug)
         {
             var movie = await _movieService.GetByIdOrSlugAsync(movieIdOrSlug);
@@ -34,18 +36,25 @@ namespace MoviesDb.Web.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<MovieResponse>> CreateMovieAsync([FromBody] CreateMovieRequest request)
         {
-            var movie = await _movieService.CreateMovieAsync(request, Guid.NewGuid());
-            return CreatedAtAction(nameof(GetMovieByIdOrSlugAsync), new { movieIdOrSlug = movie.Id }, movie);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var movie = await _movieService.CreateMovieAsync(request, userId);
+            return CreatedAtAction("GetMovieByIdOrSlug", new { movieIdOrSlug = movie.Id.ToString() }, movie);
         }
 
         [HttpPut("{movieId}")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<MovieResponse>> UpdateMovieAsync(Guid movieId, [FromBody] UpdateMovieRequest request)
         {
             var movie = await _movieService.UpdateMovieAsync(movieId, request);
@@ -53,8 +62,11 @@ namespace MoviesDb.Web.Api.Controllers
         }
 
         [HttpDelete("{movieId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> DeleteMovieAsync(Guid movieId)
         {
             await _movieService.DeleteMovieAsync(movieId);

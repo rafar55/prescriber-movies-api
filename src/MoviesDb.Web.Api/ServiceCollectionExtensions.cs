@@ -8,6 +8,9 @@ using MoviesDb.Application.Users.Services;
 using MoviesDb.Infrastructure.Authentication;
 using MoviesDb.Infrastructure.Database;
 using MoviesDb.Infrastructure.Repositories;
+using MoviesDb.Web.Api.Extensions;
+using Hellang.Middleware.ProblemDetails;
+
 
 namespace MoviesDb.Web.Api;
 
@@ -36,8 +39,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddSingleton<ITokenProvider, JwtTokenProvider>();
 
-        services.Configure<JwtTokenConfig>(configuration.GetSection("Jwt"));
-        services.AddScoped(ctx => ctx.GetRequiredService<IOptionsSnapshot<JwtTokenConfig>>().Value);
+        services.Configure<JwtTokenConfig>(configuration.GetSection(JwtTokenConfig.SectionName));
+        services.AddSingleton(ctx => ctx.GetRequiredService<IOptions<JwtTokenConfig>>().Value);
 
 
         services.AddFluentMigratorCore()
@@ -46,7 +49,14 @@ public static class ServiceCollectionExtensions
                 .WithGlobalConnectionString(connectionString)
                 .ScanIn(typeof(DbInitializer).Assembly).For.Migrations());
         services.AddScoped<DbInitializer>();
-            
+
+        services.AddProblemDetails(options =>
+        {
+            options.IncludeExceptionDetails = (_,_) => false;
+            options.MapFluentValidation();
+            options.MapApplicationExceptions();
+        });
+
         return services;
     }
 }

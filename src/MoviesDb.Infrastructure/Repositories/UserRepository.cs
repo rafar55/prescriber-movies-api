@@ -43,8 +43,9 @@ public class UserRepository: IUserRepository
             WHERE Email = @Email
             """;
         using var command = new SqlCommand(sql, (SqlConnection)cnn);
-        using var reader = command.ExecuteReader(CommandBehavior.SingleRow);
         command.Parameters.AddWithValue("@Email", email);
+        using var reader = command.ExecuteReader(CommandBehavior.SingleRow);
+     
         if (!await reader.ReadAsync())
         {
             return null;
