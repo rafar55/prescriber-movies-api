@@ -15,13 +15,19 @@ public class MovieValidator : AbstractValidator<Movie>
 
         RuleFor(x => x.Title)
             .NotEmpty()
-            .MaximumLength(100);
+            .MaximumLength(250);
         RuleFor(x => x.YearOfRelease)
             .LessThanOrEqualTo(DateTimeOffset.UtcNow.Year);
         RuleFor(x => x.Genres)
             .NotEmpty();
+
+        RuleForEach(x => x.Genres)
+            .NotEmpty()
+            .MaximumLength(250);
+
         RuleFor(x => x.Slug)
             .NotEmpty()
+            .MaximumLength(350)
             .MustAsync(ValidateSlug)
             .WithMessage("This movie already exists on our database");
     

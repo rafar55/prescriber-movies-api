@@ -1,3 +1,4 @@
+using MoviesDb.Infrastructure.Database;
 using MoviesDb.Web.Api;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,4 +27,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+//This is not for production
+// but fot the purpose of the challenge it will work
+await RunDbInitializer(app);
+
 app.Run();
+
+
+async Task RunDbInitializer(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+    await dbInitializer.RunMigrationAsync();
+    await dbInitializer.SeedDatabaseAsync();
+}
