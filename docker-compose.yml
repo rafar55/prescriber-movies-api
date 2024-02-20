@@ -1,0 +1,25 @@
+version: '3.4'
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=MoviesDb;User Id=sa;Password=Password1!;MultipleActiveResultSets=true;TrustServerCertificate=true
+      - ConnectionStrings__MasterConnection=Server=db;Database=master;User Id=sa;Password=Password1!;MultipleActiveResultSets=true;TrustServerCertificate=true
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wait-db.sh:/wait-db.sh
+    command: ["/bin/bash", "/wait-db.sh", "db:1433", "sa", "Your_password123", "--", "dotnet", "MoviesDb.Web.Api.dll"]
+    depends_on:
+      - db
+
+  db:
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      SA_PASSWORD: "Password1!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"

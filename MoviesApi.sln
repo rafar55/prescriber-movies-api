@@ -5,7 +5,10 @@ VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B06976D6-7E2B-4496-B32E-E3B78C03BD8D}"
 	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+		Dockerfile = Dockerfile
 		Readme.md = Readme.md
+		wait-db.sh = wait-db.sh
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoviesDb.Application", "src\MoviesDb.Application\MoviesDb.Application.csproj", "{AA05AD76-4F0C-4EB3-BDDA-36F03F884F70}"
@@ -22,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{97B9F565-0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{291537B9-694B-4225-AB39-786D7AFBDC0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovieDb.Application.Tests", "src\MovieDb.Application.Tests\MovieDb.Application.Tests.csproj", "{7A37EE55-3BCD-4BD5-B640-A110B6FB6938}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MovieDb.Application.Tests", "src\MovieDb.Application.Tests\MovieDb.Application.Tests.csproj", "{7A37EE55-3BCD-4BD5-B640-A110B6FB6938}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
