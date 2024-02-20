@@ -22,12 +22,15 @@ public class MovieValidator : AbstractValidator<Movie>
             .NotEmpty();
         RuleFor(x => x.Slug)
             .NotEmpty()
-            .MustAsync(ValidateSlug);
+            .MustAsync(ValidateSlug)
+            .WithMessage("This movie already exists on our database");
     
     }
 
-    private Task<bool> ValidateSlug(string slug, CancellationToken token)
+    private async Task<bool> ValidateSlug(string slug, CancellationToken token)
     {
-        throw new NotImplementedException();
+        var result = await _movieRepository.ExistsSlugAsync(slug);
+        return result;
+
     }
 }

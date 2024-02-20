@@ -42,6 +42,16 @@ public class MovieRepository : IMovieRepository
         return movie;
     }
 
+    public async Task<bool> ExistsSlugAsync(string slug)
+    {
+        var sql = "SELECT 1 FROM Movies WHERE Id = @slug";
+        using var connection = await _dbConnectionFactory.CreateConnectionAsync();
+        using var command = new SqlCommand(sql, (SqlConnection)connection);
+        command.Parameters.AddWithValue("@movieId", slug);
+
+        return await command.ExecuteScalarAsync() is not null;
+    }
+
     public async Task<Movie?> GetMovieBySlugAsync(string slug)
     {
         var sql = """
