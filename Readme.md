@@ -1,6 +1,6 @@
 # User Stories
 
-- As a user, I want to be able to see a list of all the available movies.
+- As a user, I want to be able to see a list of all the available movies and filter by title, year of release or both.
 - As a user, I want to be able to see the details of a movie.
 - As a user, I want to be able to see the list of all the  movies and search for a movie by its name or director
 - As a admin user, I want to be able to add a new movie to the list of movies.
@@ -17,3 +17,4 @@
 I think is better to push on with delivering a working software and then go back and add the tests.
 1. I also decided to use exception handling middleware to handle bussiness rules. I would have use the result pattern but I think it would be overkill for this small project.
 1. Created a database initializer to seed to database and create database. I decided to use fluent migrator for this. I just easier and super light weight.
+1. I will start implementing the authentication and users. I Decided to use BCrypt to hash the password cause the follow the latest hashing standards and is very secure.

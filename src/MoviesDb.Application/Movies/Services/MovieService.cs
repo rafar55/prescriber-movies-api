@@ -3,7 +3,6 @@ using MoviesDb.Application.Common.Dtos;
 using MoviesDb.Application.Common.Interfaces;
 using MoviesDb.Application.Movies.Dtos;
 using MoviesDb.Application.Movies.Mappers;
-using MoviesDb.Application.Movies.Validators;
 using MoviesDb.Domain.Exceptions;
 using MoviesDb.Domain.Models;
 

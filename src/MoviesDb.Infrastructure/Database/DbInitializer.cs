@@ -11,15 +11,21 @@ public class DbInitializer
     private IMigrationRunner _migrationRunner;
     private readonly IDbConnectionFactory _dbConnectionFactory;
     private readonly IMovieRepository _movieRepository;
+    private readonly IPasswordHasher _passwordHasher;
+    private readonly IUserRepository _userRepository;
 
     public DbInitializer(
-        IMigrationRunner migrationRunner, 
-        IDbConnectionFactory dbConnectionFactory, 
-        IMovieRepository movieRepository)
+        IMigrationRunner migrationRunner,
+        IDbConnectionFactory dbConnectionFactory,
+        IMovieRepository movieRepository,
+        IPasswordHasher passwordHasher,
+        IUserRepository userRepository)
     {
         _migrationRunner = migrationRunner;
         _dbConnectionFactory = dbConnectionFactory;
         _movieRepository = movieRepository;
+        _passwordHasher = passwordHasher;
+        _userRepository = userRepository;
     }
 
     public async Task RunMigrationAsync()
@@ -30,14 +36,34 @@ public class DbInitializer
 
     public async Task SeedDatabaseAsync()
     {
-        var cnn = await _dbConnectionFactory.CreateConnectionAsync();        
+        var cnn = await _dbConnectionFactory.CreateConnectionAsync();
+
+        var userQuery = "SELECT 1 FROM Users";
+        using var userCommand = new SqlCommand(userQuery, (SqlConnection)cnn);
+        var usersExists = (await userCommand.ExecuteScalarAsync()) is not null;
+        var adminUserId = Guid.Parse("00c84a49-483f-4c05-ad84-26772d18ab22");
+        if (!usersExists)
+        {
+            var adminUser = new User()
+            {
+                Id = adminUserId,
+                Email = "admin@supersecret.com",
+                IsAdmin = true,
+                PasswordHash = _passwordHasher.HashPassword("superadmin"),
+                CreatedAt = DateTimeOffset.UtcNow,
+                FirstName = "Super",
+                LastName = "Admin",
+            };
+
+            await _userRepository.CreateAsync(adminUser);
+        }
+
+
         var query = "SELECT 1 FROM Movies";
         using var sqlCommand = new SqlCommand(query, (SqlConnection)cnn);
-        var exists = (await sqlCommand.ExecuteScalarAsync()) is not null;
-        if(!exists)
+        var moviesExists = (await sqlCommand.ExecuteScalarAsync()) is not null;
+        if (!moviesExists)
         {
-            var adminUserId = Guid.Parse("00c84a49-483f-4c05-ad84-26772d18ab22");
-
             var movies = new[]
             {
                 new Movie()
@@ -75,14 +101,14 @@ public class DbInitializer
     private async Task CreateDatabaseAsync(string DbName)
     {
         var query = "SELECT 1 FROM sys.databases WHERE name = @name";
-        using var sqlConnection = (SqlConnection) await _dbConnectionFactory.CreateMasterConnection();
+        using var sqlConnection = (SqlConnection)await _dbConnectionFactory.CreateMasterConnection();
         using var sqlCommand = new SqlCommand(query, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@name", DbName);
         var exists = (await sqlCommand.ExecuteScalarAsync()) is not null;
-        if(!exists)
+        if (!exists)
         {
             sqlCommand.CommandText = $"CREATE DATABASE {DbName}";
-            await  sqlCommand.ExecuteNonQueryAsync();
-        }        
+            await sqlCommand.ExecuteNonQueryAsync();
+        }
     }
 }

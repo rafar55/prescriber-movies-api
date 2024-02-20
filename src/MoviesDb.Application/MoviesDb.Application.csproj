@@ -14,4 +14,8 @@
     <ProjectReference Include="..\MoviesDb.Domain\MoviesDb.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Common\Providers\" />
+  </ItemGroup>
+
 </Project>

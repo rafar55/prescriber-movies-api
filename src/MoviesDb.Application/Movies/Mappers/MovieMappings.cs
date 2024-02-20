@@ -3,7 +3,7 @@ using MoviesDb.Domain.Models;
 
 namespace MoviesDb.Application.Movies.Mappers;
 
-public static class MovieMappings
+internal static class MovieMappings
 {
     public static MovieResponse ToResponse(this Movie movie)
     {
