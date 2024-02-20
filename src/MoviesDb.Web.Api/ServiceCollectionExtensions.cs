@@ -1,5 +1,6 @@
 ﻿using FluentMigrator.Runner;
 using FluentValidation;
+using Microsoft.Extensions.Options;
 using MoviesDb.Application.Common.Interfaces;
 using MoviesDb.Application.Movies.Services;
 using MoviesDb.Application.Movies.Validators;
@@ -33,6 +34,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddSingleton<ITokenProvider, JwtTokenProvider>();
+
+        services.Configure<JwtTokenConfig>(configuration.GetSection("Jwt"));
+        services.AddScoped(ctx => ctx.GetRequiredService<IOptionsSnapshot<JwtTokenConfig>>().Value);
+
 
         services.AddFluentMigratorCore()
             .ConfigureRunner(rb => rb

@@ -58,4 +58,14 @@ public class UserService : IUserService
 
         return dbModel.MapToResponse();
     }
+
+    public async Task<UserResponse> GetByEmailAsync(string email)
+    {
+        var dbUser = await _userRepository.GetByEmailAsync(email);
+        if(dbUser is null)
+        {
+            throw new EntityNotFoundException(email, nameof(User));
+        }
+        return dbUser.MapToResponse();
+    }
 }
