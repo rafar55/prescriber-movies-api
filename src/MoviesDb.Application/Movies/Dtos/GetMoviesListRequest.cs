@@ -2,9 +2,9 @@
 
 namespace MoviesDb.Application.Movies.Dtos;
 
-public record GetMoviesListRequest : PagedRequest
+public class GetMoviesListRequest : PagedRequest
 {
-    public string? Q { get; set; }
+    public string? Title { get; set; }
     public int? YearOfRelease { get; set; }
 }
 

@@ -1,9 +1,13 @@
-﻿namespace MoviesDb.Application.Common.Dtos;
+﻿using System.Text.Json.Serialization;
 
-public abstract record PagedRequest
+namespace MoviesDb.Application.Common.Dtos;
+
+public abstract class PagedRequest
 {
     public int PageSize { get; set; } = 10;
     public int Page { get; set; } = 1;
-    public int PageOffset => (Page - 1) * PageSize;
+
+  
+    public int GetOffset() => (Page - 1) * PageSize;
 };
 

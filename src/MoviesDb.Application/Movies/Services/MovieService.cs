@@ -25,14 +25,32 @@ public class MovieService : IMovieService
         _timeProvider = timeProvider;
     }
 
-    public async Task<MovieResponse> GetMovieAsync(Guid movieId)
+    public async Task<MovieResponse> GetByIdAsync(Guid movieId)
     {
         var movieDb = await _movieRepository.GetMovieByIdAsync(movieId);
         if (movieDb == null)
         {
-            throw new EntityNotFoundException(movieId, nameof(Movie));
+            throw new EntityNotFoundException(movieId.ToString(), nameof(Movie));
         }
         return movieDb.ToResponse();
+    }
+
+    public async Task<MovieResponse> GetBySlugAsync(string slug)
+    {
+        var movieDb = await _movieRepository.GetMovieBySlugAsync(slug);
+        if (movieDb == null)
+        {
+            throw new EntityNotFoundException(slug, nameof(Movie));
+        }
+        return movieDb.ToResponse();
+    }
+
+    public async Task<MovieResponse> GetByIdOrSlugAsync(string idOrSlug)
+    {
+        var movie = Guid.TryParse(idOrSlug, out var movieId)
+            ? await GetByIdAsync(movieId)
+            : await GetBySlugAsync(idOrSlug);
+        return movie;
     }
 
     public async Task<PagedResponse<MovieResponse>> GetMoviesAsync(GetMoviesListRequest request)
@@ -42,7 +60,7 @@ public class MovieService : IMovieService
         {
             PageSize = pagedResponse.PageSize,
             Page = pagedResponse.Page,
-            Total = pagedResponse.Total,
+            TotalItems = pagedResponse.TotalItems,
             Items = pagedResponse.Items.ToResponseList()
         };
     }
@@ -67,7 +85,7 @@ public class MovieService : IMovieService
         var changeCount = await _movieRepository.UpdateMovie(dbModel);
         if(changeCount == 0)
         {
-            throw new EntityNotFoundException(movieId, nameof(Movie));
+            throw new EntityNotFoundException(movieId.ToString(), nameof(Movie));
         }
 
         return dbModel.ToResponse();
@@ -78,7 +96,7 @@ public class MovieService : IMovieService
         var changeCount = await _movieRepository.DeleteMovieAsync(movieId);
         if(changeCount == 0)
         {
-            throw new EntityNotFoundException(movieId, nameof(Movie));
+            throw new EntityNotFoundException(movieId.ToString(), nameof(Movie));
         }
         return true;
     }

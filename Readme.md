@@ -15,4 +15,5 @@
 5. I was thinking on changing the db to mongoDB, but it is to late already spent a lot of time implementing the repositories (with ado.net :( ). Maybe when I finish everything I will switch
 6. I will now continue with the API endpoints. I will leave the tests at the end because I have limited time. I know normally the test  should go first but unfortunatly I had an emergency situation that took a lot of the allocated time I had for this challenge.		
 I think is better to push on with delivering a working software and then go back and add the tests.
-1. I also decided to use exception handling middleware to handle exceptions in the API layer. I wanted to use results pattern but I think it will take to much time to implement it. I will use the exception handling middleware to handle exceptions in the API layer.
+1. I also decided to use exception handling middleware to handle bussiness rules. I would have use the result pattern but I think it would be overkill for this small project.
+1. Created a database initializer to seed to database and create database. I decided to use fluent migrator for this. I just easier and super light weight.

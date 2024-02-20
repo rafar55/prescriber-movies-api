@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\MoviesDb.Application\MoviesDb.Application.csproj" />
     <ProjectReference Include="..\MoviesDb.Domain\MoviesDb.Domain.csproj" />
     <ProjectReference Include="..\MoviesDb.Infrastructure\MoviesDb.Infrastructure.csproj" />

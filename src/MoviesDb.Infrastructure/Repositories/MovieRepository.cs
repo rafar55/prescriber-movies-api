@@ -20,11 +20,11 @@ public class MovieRepository : IMovieRepository
     public async Task<Movie?> GetMovieByIdAsync(Guid movieId)
     {
         var sql = """
-            SELECT M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(G.Name, ',') AS Genres
+            SELECT M.Id,M.Slug, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(G.Name, ',') AS Genres
             FROM Movies AS M
             JOIN Genres AS G ON M.Id = G.MovieId
             WHERE Id = @movieId
-            GROUP BY M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy
+            GROUP BY M.Id,M.Slug,M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy
             """;
 
         //All this boiler plate code could be avoided by using Dapper
@@ -55,11 +55,11 @@ public class MovieRepository : IMovieRepository
     public async Task<Movie?> GetMovieBySlugAsync(string slug)
     {
         var sql = """
-            SELECT M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(G.Name, ',') AS Genres
+            SELECT M.Id,M.Slug,M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(G.Name, ',') AS Genres
             FROM Movies AS M
             JOIN Genres AS G ON M.Id = G.MovieId
             WHERE Slug = @slug
-            GROUP BY M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy
+            GROUP BY M.Id,M.Title,M.Slug, M.YearOfRelease, M.CreatedAt, M.CreatedBy
             """;
         using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         using var command = new SqlCommand(sql, (SqlConnection)connection);
@@ -80,36 +80,38 @@ public class MovieRepository : IMovieRepository
 
         using var connection = await _dbConnectionFactory.CreateConnectionAsync();
         
-        var countSql = "SELECT COUNTMmovies.Id) FROM Movies WHERE Title LIKE '%' + IsNull(@title,'') + '%'";
+        var countSql = """
+            SELECT COUNT(movies.Id) FROM Movies 
+            WHERE Title LIKE '%' + COALESCE(@title,'') + '%'
+            AND @YearOfRelease IS NULL OR YearOfRelease = @YearOfRelease
+            """;
         using var countCommand = new SqlCommand(countSql, (SqlConnection)connection);
-        countCommand.Parameters.AddWithValue("@title", request.Q);
+        countCommand.Parameters.AddWithValue("@title", request.Title ?? (object)DBNull.Value);
+        countCommand.Parameters.AddWithValue("@YearOfRelease", request.YearOfRelease ?? (object)DBNull.Value);
         var totalRecords = (await countCommand.ExecuteScalarAsync() as int?) ?? 0;
       
         if(totalRecords == 0)
         {
-            return new PagedResponse<Movie>()
-            {
-                Items = Enumerable.Empty<Movie>(),
-                Total = 0,
-                Page = request.Page,
-                PageSize = request.PageSize
-            };
+            return  PagedResponse<Movie>.Empty(request.PageSize, request.Page);
         }
 
 
         var sql = """
-            SELECT M.Id, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(R.Name, ',') AS Genres
+            SELECT M.Id,M.Slug, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy,STRING_AGG(R.Name, ',') AS Genres
             FROM Movies AS M
             JOIN Genres AS R ON M.Id = R.MovieId
-            GROUP BY M.Id, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy
-            WHERE M.Title LIKE "%" + IsNull(@title,'') + "%"
-            OFFSET  @Offset ROWS 
+            WHERE M.Title LIKE '%' + COALESCE(@title,'') + '%'
+            AND @YearOfRelease IS NULL OR M.YearOfRelease = @YearOfRelease
+            GROUP BY M.Id,M.Slug, M.Title, M.YearOfRelease, M.CreatedAt, M.CreatedBy            
+            ORDER BY M.YearOfRelease DESC
+            OFFSET @Offset ROWS 
             FETCH NEXT @PageSize ROW ONLY OPTION (RECOMPILE)
             """;
         using var command = new SqlCommand(sql, (SqlConnection)connection);
-        command.Parameters.AddWithValue("@title", request.Q);
+        command.Parameters.AddWithValue("@title", request.Title ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@YearOfRelease", request.YearOfRelease ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("@PageSize", request.PageSize);
-        command.Parameters.AddWithValue("@Offset", request.PageOffset);
+        command.Parameters.AddWithValue("@Offset", request.GetOffset());
 
         using var reader = await command.ExecuteReaderAsync();
         var movies = new List<Movie>();
@@ -121,7 +123,7 @@ public class MovieRepository : IMovieRepository
         return new PagedResponse<Movie>()
         {
             Items = movies,
-            Total = totalRecords,
+            TotalItems = totalRecords,
             Page = request.Page,
             PageSize = request.PageSize
         };
